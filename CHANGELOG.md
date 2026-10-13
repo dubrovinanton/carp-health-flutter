@@ -1,3 +1,7 @@
+## 13.3.2+fitny.1 (Fitny fork)
+
+* Android: wrap `getGrantedPermissions()` calls (`hasPermissions`, `isHealthDataHistoryAuthorized`, `isHealthDataInBackgroundAuthorized`) in try/catch and add a `CoroutineExceptionHandler` to the plugin scope. A Health Connect service-binding failure (`RemoteException: Binding to service failed`) is thrown on a background coroutine and, left uncaught, crashed the host app on budget pre-14 devices where the provider can be disabled/killed while `getSdkStatus()` still reports `SDK_AVAILABLE`. Unreachable provider is now treated as "not granted".
+
 ## 13.3.2
 
 * Write data now returns UUID of records - PR [#448](https://github.com/carp-dk/carp-health-flutter/pull/448)

@@ -55,12 +55,23 @@ class HealthDataOperations(
         }
 
         scope.launch {
-            result.success(
-                    healthConnectClient
-                            .permissionController
-                            .getGrantedPermissions()
-                            .containsAll(permList),
-            )
+            try {
+                result.success(
+                        healthConnectClient
+                                .permissionController
+                                .getGrantedPermissions()
+                                .containsAll(permList),
+                )
+            } catch (e: Exception) {
+                // Binding to the Health Connect service can fail at runtime even
+                // when getSdkStatus() reports SDK_AVAILABLE (provider disabled /
+                // killed / install race on budget pre-14 devices). The exception is
+                // thrown on this background coroutine, so a Dart-side try/catch can
+                // never see it — left uncaught it crashes the whole app. Treat an
+                // unreachable provider as "not granted".
+                Log.w("FLUTTER_HEALTH::ERROR", "hasPermissions failed: ${e.message}")
+                result.success(false)
+            }
         }
     }
 
@@ -122,12 +133,19 @@ class HealthDataOperations(
      */
     fun isHealthDataHistoryAuthorized(call: MethodCall, result: Result) {
         scope.launch {
-            result.success(
-                    healthConnectClient
-                            .permissionController
-                            .getGrantedPermissions()
-                            .containsAll(listOf(PERMISSION_READ_HEALTH_DATA_HISTORY)),
-            )
+            try {
+                result.success(
+                        healthConnectClient
+                                .permissionController
+                                .getGrantedPermissions()
+                                .containsAll(listOf(PERMISSION_READ_HEALTH_DATA_HISTORY)),
+                )
+            } catch (e: Exception) {
+                // See hasPermissions(): a service-binding failure throws on this
+                // coroutine and would crash the app if left uncaught.
+                Log.w("FLUTTER_HEALTH::ERROR", "isHealthDataHistoryAuthorized failed: ${e.message}")
+                result.success(false)
+            }
         }
     }
 
@@ -157,12 +175,19 @@ class HealthDataOperations(
      */
     fun isHealthDataInBackgroundAuthorized(call: MethodCall, result: Result) {
         scope.launch {
-            result.success(
-                    healthConnectClient
-                            .permissionController
-                            .getGrantedPermissions()
-                            .containsAll(listOf(PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)),
-            )
+            try {
+                result.success(
+                        healthConnectClient
+                                .permissionController
+                                .getGrantedPermissions()
+                                .containsAll(listOf(PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND)),
+                )
+            } catch (e: Exception) {
+                // See hasPermissions(): a service-binding failure throws on this
+                // coroutine and would crash the app if left uncaught.
+                Log.w("FLUTTER_HEALTH::ERROR", "isHealthDataInBackgroundAuthorized failed: ${e.message}")
+                result.success(false)
+            }
         }
     }
 

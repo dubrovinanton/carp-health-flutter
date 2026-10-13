@@ -62,7 +62,14 @@ class HealthPlugin(private var channel: MethodChannel? = null) :
     override fun onAttachedToEngine(
             @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
     ) {
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        // Safety net: without a handler, any uncaught exception in a scope.launch
+        // block (e.g. a Health Connect service-binding failure on budget pre-14
+        // devices) propagates to the thread's default handler and crashes the app.
+        // Such failures are thrown on this coroutine, out of reach of Dart try/catch.
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            Log.e("FLUTTER_HEALTH::ERROR", "Uncaught coroutine exception", throwable)
+        }
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.Main + exceptionHandler)
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, CHANNEL_NAME)
         channel?.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
